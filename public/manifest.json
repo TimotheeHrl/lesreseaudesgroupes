@@ -1,0 +1,52 @@
+{
+  "name": "mapforf",
+  "short_name": "mapforf",
+  "icons": [
+    {
+      "src": "/android.png",
+      "sizes": "36x36",
+      "type": "image/png",
+      "density": "0.75"
+    },
+    {
+      "src": "/feveIcon.svg",
+      "sizes": "36x36",
+      "type": "image/svg",
+      "density": "1.0"
+    },
+    {
+      "src": "/location.svg",
+      "sizes": "36x36",
+      "type": "image/svg",
+      "density": "1.5"
+    },
+    {
+      "src": "/logo_1.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "density": "2.0"
+    },
+    {
+      "src": "/logo_2.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "density": "3.0"
+    },
+    {
+      "src": "/planetIcon.svg",
+      "sizes": "152x152",
+      "type": "image/svg"
+    }
+  ],
+  "theme_color": "#FF0000",
+  "background_color": "#FFFFFF",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "splash_pages": null
+}

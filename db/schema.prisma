@@ -1,0 +1,336 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --------------------------------------
+
+model User {
+  id               String               @id @default(uuid())
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  name             String               @unique
+  email            String               @unique
+  hashedPassword   String
+  userDescription  String               @default("")
+  lien             String               @default("")
+  getNotifications Boolean
+  isActive         Boolean              @default(true)
+  emailIsVerified  Boolean              @default(false)
+  bio              String               @default("")
+  role             String               @default("NONVERIF")
+  avatar           String               @default("")
+  tokens           Token[]
+  sessions         Session[]
+  teams            Team[]               @relation(references: [id])
+  tposts           Tpost[]
+  tevents          Tevent[]
+  treplies         Treply[]
+  aposts           Apost[]
+  following        TeamFollower[]
+  ereplies         Ereply[]
+  sentMessages     Message[]            @relation("sentMessage")
+  receivedMessages Message[]            @relation("receivedMessage")
+  participatesIn   Chat[]               @relation("participatesIn")
+  images           Image[]
+  hasRead          AdminMessage[]       @relation("wasReadBy")
+  isPublic         Boolean              @default(true)
+  userLat          Float
+  userLon          Float
+  invitedInEvent   Tevent[]             @relation("invitedInEvent")
+  UserPartInEvents UserParticipeEvent[]
+  ip               String[]
+  Areply           Areply[]
+  signalsToAdmin   SignalAdmin[]        @relation("signalsToAdmin")
+}
+
+model Session {
+  id                 Int       @id @default(autoincrement())
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  expiresAt          DateTime?
+  handle             String    @unique
+  hashedSessionToken String?
+  antiCSRFToken      String?
+  publicData         String?
+  privateData        String?
+  name               String?
+  user               User      @relation(fields: [userId], references: [id])
+  userId             String
+  emailIsVerified    Boolean?
+}
+
+model BannedIp {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  ip        String
+}
+
+model MainPage {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  usesEditor  Boolean  @default(true)
+  maincontent String   @default("<p>mainpage</p>")
+}
+
+model Apost {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  content   String
+  areplys   Areply[]
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+}
+
+model Areply {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  content   String
+  number    Int      @default(autoincrement())
+  user      User     @relation(references: [id], fields: [userId])
+  userId    String
+  apost     Apost    @relation(fields: [apostId], references: [id])
+  apostId   String
+}
+
+model Faq {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  subject      String
+  content      String
+  orderSubject Int
+}
+
+model Token {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  hashedToken String
+  type        String
+  // See note below about TokenType enum
+  //type        TokenType
+  expiresAt   DateTime
+  sentTo      String
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+
+  @@unique([hashedToken, type])
+}
+
+// NOTE: It's highly recommended to use an enum for the token type
+//       but enums only work in Postgres.
+//       See: https://blitzjs.com/docs/database-overview#switch-to-postgresql
+enum TokenType {
+  RESET_PASSWORD
+}
+
+model TokenMailVerification {
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  hashedToken    String
+  type           String
+  // See note below about TokenType enum
+  // type        TokenType
+  expiresAt      DateTime
+  sentTo         String
+  hashedPassword String
+  name           String
+
+  @@unique([hashedToken, type])
+}
+
+model Image {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  asset_id  String
+  url       String
+}
+
+model Team {
+  id            String         @id @default(uuid())
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  name          String         @unique
+  description   String
+  corpus        String         @default("")
+  anneeCreation Int
+  secteur       String
+  typeOrg       String
+  taille        Int
+  teamLatitude  Float
+  teamLongitude Float
+  image         String         @default("https://upload.wikimedia.org/wikipedia/commons/7/70/Solid_white.svg?uselang=fr")
+  imageCover    String         @default("https://upload.wikimedia.org/wikipedia/commons/7/70/Solid_white.svg?uselang=fr")
+  TeamMastersID String[]
+  TeamMemberId  String[]
+  users         User[]
+  public        Boolean        @default(false)
+  tposts        Tpost[]
+  findIndex     Int            @default(0)
+  tevents       Tevent[]
+  treplies      Treply[]
+  ereplies      Ereply[]
+  tags          Tag[]          @relation(references: [id])
+  teamFollowers TeamFollower[]
+  publishDemand Boolean        @default(false)
+}
+
+model Tag {
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  id          String   @id
+  teams       Team[]   @relation(references: [id])
+  isPublic    Boolean  @default(true)
+  catSpecific String   @default("ctag")
+}
+
+model TeamFollower {
+  id         String   @id
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  team       Team[]   @relation(fields: [teamId], references: [id])
+  teamId     String
+  user       User[]   @relation(fields: [followerId], references: [id])
+  followerId String
+}
+
+model Tpost {
+  id        String   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  content   String
+  number    Int      @default(autoincrement())
+  treplys   Treply[]
+  teamRef   Team     @relation(references: [id], fields: [teamId])
+  user      User     @relation(references: [id], fields: [userId])
+  teamId    String
+  userId    String
+}
+
+model Tevent {
+  id                  String               @id
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  subject             String
+  startAt             DateTime
+  endsAt              DateTime
+  content             String
+  maxParticipants     Int
+  ereplys             Ereply[]
+  teamRef             Team                 @relation(references: [id], fields: [teamId])
+  user                User                 @relation(references: [id], fields: [userId])
+  teamId              String
+  userId              String
+  invitedUsers        User[]               @relation("invitedInEvent")
+  eventLat            Float
+  eventLon            Float
+  locationDescription String?
+  visioPres           Boolean
+  linkVisio           String?
+  visioCode           String?
+  infoPostscritum     String?
+  isCancel            Boolean              @default(false)
+  usersParticipeEvent UserParticipeEvent[]
+  visible             Boolean
+  postScriptWriterId  String?
+  recallEmailSent     Boolean              @default(false)
+
+}
+
+model UserParticipeEvent {
+  id            String   @id
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  tevent        Tevent[] @relation(fields: [teventId], references: [id])
+  teventId      String
+  user          User[]   @relation(fields: [participantId], references: [id])
+  participantId String
+}
+
+model Ereply {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  content   String
+  number    Int      @default(autoincrement())
+  teamRef   Team     @relation(references: [id], fields: [teamId])
+  user      User     @relation(references: [id], fields: [userId])
+  tevent    Tevent   @relation(references: [id], fields: [teventId])
+  teventId  String
+  teamId    String
+  userId    String
+}
+
+model Treply {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  content   String
+  number    Int      @default(autoincrement())
+  tpost     Tpost    @relation(references: [id], fields: [tpostId])
+  teamRef   Team     @relation(references: [id], fields: [teamId])
+  user      User     @relation(references: [id], fields: [userId])
+  tpostId   String
+  teamId    String
+  userId    String
+}
+
+model Message {
+  id          String   @id
+  sentAt      DateTime @default(now())
+  content     String
+  htmlContent String?
+  sentFrom    User     @relation("sentMessage", fields: [sentFromId], references: [id])
+  sentFromId  String
+
+  sentTo   User[]   @relation("receivedMessage")
+  sentToId String[]
+
+  sentIn   Chat   @relation("messageIn", fields: [sentInId], references: [id])
+  sentInId String
+}
+
+model SignalAdmin {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  content     String
+  isTreated   Boolean  @default(false)
+  chatId      String   @unique
+  subject     String
+  userSending User     @relation("signalsToAdmin", fields: [userId], references: [id])
+  userId      String
+}
+
+model Chat {
+  id                 String         @id
+  subject            String
+  private            Boolean
+  adminMessages      AdminMessage[] @relation("adminMessageIn")
+  messages           Message[]      @relation("messageIn")
+  participatingUsers User[]         @relation("participatesIn")
+  IsDeletedByAdmin   Boolean        @default(false)
+
+}
+
+model AdminMessage {
+  id          String   @id @default(uuid())
+  sentAt      DateTime @default(now())
+  content     String
+  htmlContent String?
+
+  sentIn    Chat   @relation("adminMessageIn", fields: [sentInId], references: [id])
+  sentInId  String
+  wasReadBy User[] @relation("wasReadBy")
+}
+
